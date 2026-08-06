@@ -8,18 +8,22 @@ public class Pot : MonoBehaviour
     [SerializeField] private Transform holdPoint;
     [SerializeField] private KeyCode interactKey = KeyCode.F;
     [SerializeField] private float interactDistance = 1.5f;
+    [SerializeField] private bool canBePickedUp = true;
 
     private Rigidbody2D rb;
     private Collider2D potCollider;
     private Transform playerTransform;
+    private Transform originalParent;
     private bool isHeld;
 
     public bool IsHeld => isHeld;
+    public bool CanBePickedUp => canBePickedUp;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         potCollider = GetComponent<Collider2D>();
+        originalParent = transform.parent;
     }
 
     private void Start()
@@ -33,7 +37,7 @@ public class Pot : MonoBehaviour
 
     private void Update()
     {
-        if (playerTransform == null)
+        if (!canBePickedUp || playerTransform == null)
         {
             return;
         }
@@ -87,7 +91,7 @@ public class Pot : MonoBehaviour
     private void Drop()
     {
         isHeld = false;
-        transform.SetParent(null);
+        transform.SetParent(originalParent, true);
 
         if (holdPoint != null)
         {
@@ -103,5 +107,38 @@ public class Pot : MonoBehaviour
         {
             potCollider.enabled = true;
         }
+    }
+
+    public void ConfigureAsPresentMirror()
+    {
+        canBePickedUp = false;
+        isHeld = false;
+
+        if (rb != null)
+        {
+            rb.velocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.bodyType = RigidbodyType2D.Kinematic;
+            rb.gravityScale = 0f;
+            rb.simulated = true;
+        }
+
+        if (potCollider != null)
+        {
+            potCollider.enabled = true;
+        }
+    }
+
+    public void SyncMirrorPosition(Vector3 worldPosition)
+    {
+        Vector3 targetPosition = new Vector3(worldPosition.x, worldPosition.y, transform.position.z);
+
+        if (rb != null && rb.bodyType == RigidbodyType2D.Kinematic && rb.simulated)
+        {
+            rb.MovePosition(targetPosition);
+            return;
+        }
+
+        transform.position = targetPosition;
     }
 }

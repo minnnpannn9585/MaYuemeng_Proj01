@@ -7,17 +7,19 @@ public class TimeTravel : MonoBehaviour
     [SerializeField] private float travelDistance = 50f;
     [SerializeField] private Pot carriedPot;
 
-    private bool isInFutureTimeline;
+    private bool isInPastTimeline;
 
-    // Start is called before the first frame update
-    void Start()
+    public bool IsInPastTimeline => isInPastTimeline;
+
+    private void Start()
     {
-        
+        TryResolveCarriedPot();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
+        TryResolveCarriedPot();
+
         if (Input.GetKeyDown(KeyCode.R))
         {
             if (carriedPot != null && carriedPot.IsHeld)
@@ -31,8 +33,22 @@ public class TimeTravel : MonoBehaviour
 
     private void ToggleTimeTravel()
     {
-        float moveX = isInFutureTimeline ? -travelDistance : travelDistance;
+        float moveX = isInPastTimeline ? -travelDistance : travelDistance;
         transform.position += new Vector3(moveX, 0f, 0f);
-        isInFutureTimeline = !isInFutureTimeline;
+        isInPastTimeline = !isInPastTimeline;
+    }
+
+    private void TryResolveCarriedPot()
+    {
+        if (carriedPot != null)
+        {
+            return;
+        }
+
+        PotManager potManager = FindFirstObjectByType<PotManager>();
+        if (potManager != null)
+        {
+            carriedPot = potManager.PastTimelinePot;
+        }
     }
 }

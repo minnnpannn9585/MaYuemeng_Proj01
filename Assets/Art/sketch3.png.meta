@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: d15f05df6b20343418a134ed3630bebd
+guid: d9baf5e7b4c7348b18e1e8bbbc22eda4
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -93,79 +93,32 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 3
-    buildTarget: WebGL
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 3
-    buildTarget: Android
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Sketch2_0
+      name: plant1
       rect:
         serializedVersion: 2
-        x: 197
-        y: 1640
-        width: 174
-        height: 287
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
+        x: 304
+        y: 509
+        width: 477
+        height: 1497
+      alignment: 9
+      pivot: {x: 0.5, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: c34ff24edb1a49847b748b149ac2b098
-      internalID: 711509739
+      spriteID: f856661cbb8a44ca5a0e60c0249a5d9f
+      internalID: 1969591387
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Sketch2_1
-      rect:
-        serializedVersion: 2
-        x: 757
-        y: 1642
-        width: 421
-        height: 252
-      alignment: 0
-      pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 3195773c657b3c148acb9666e5844abe
-      internalID: 882454047
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Sketch2_2
+      name: sketch3_1
       rect:
         serializedVersion: 2
         x: 1512
@@ -179,41 +132,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 5f0251ebb73b19449b9c180137418c7c
-      internalID: -98674548
+      spriteID: 5e6173464f2e346e8a57561ab6b3a39b
+      internalID: 729279822
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: pot
+      name: sketch3_2
       rect:
         serializedVersion: 2
         x: 2196
         y: 1626
         width: 334
         height: 301
-      alignment: 9
-      pivot: {x: 0.5, y: 0.008335294}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 595256c8f59510c4ba3b343a4b53c594
-      internalID: 1956481933
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: pot_straight
-      rect:
-        serializedVersion: 2
-        x: 300
-        y: 509
-        width: 382
-        height: 1110
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -221,17 +153,59 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 4edfe25b41eb97e4eb89017b1e5be2b9
-      internalID: -1048383545
+      spriteID: bea3095c91cf2404aa4b0ba2eb17862b
+      internalID: 1235322874
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: pot_curve
+      name: sketch3_3
       rect:
         serializedVersion: 2
-        x: 959
+        x: 1724
+        y: 1327
+        width: 155
+        height: 255
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 3e44aea9a5b4748248ff32863af5967d
+      internalID: -555872582
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sketch3_4
+      rect:
+        serializedVersion: 2
+        x: 1638
+        y: 1025
+        width: 420
+        height: 254
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f02efca472f814f4a98942d4fa81b4b3
+      internalID: 1841682841
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: plant2
+      rect:
+        serializedVersion: 2
+        x: 956
         y: 298
         width: 403
         height: 619
@@ -242,8 +216,50 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: d47bd1314878f654a908e3658f9ac8c3
-      internalID: 145974415
+      spriteID: f2cbad1f1db7540bfb02c0d40d2d3b81
+      internalID: 633696481
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sketch3_6
+      rect:
+        serializedVersion: 2
+        x: 1687
+        y: 632
+        width: 174
+        height: 286
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2e8497e9e66be438f88dd9431b730a7c
+      internalID: -571312834
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: sketch3_7
+      rect:
+        serializedVersion: 2
+        x: 1898
+        y: 712
+        width: 408
+        height: 228
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f34b69a2cddf841799fa40a0cb54d3bc
+      internalID: 1785678542
       vertices: []
       indices: 
       edges: []
@@ -259,12 +275,14 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      Sketch2_0: 711509739
-      Sketch2_1: 882454047
-      Sketch2_2: -98674548
-      pot: 1956481933
-      pot_curve: 145974415
-      pot_straight: -1048383545
+      plant1: 1969591387
+      plant2: 633696481
+      sketch3_1: 729279822
+      sketch3_2: 1235322874
+      sketch3_3: -555872582
+      sketch3_4: 1841682841
+      sketch3_6: -571312834
+      sketch3_7: 1785678542
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
