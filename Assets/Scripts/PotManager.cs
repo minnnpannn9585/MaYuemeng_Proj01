@@ -10,6 +10,7 @@ public class PotManager : MonoBehaviour
     [SerializeField] private bool bloomAreaIsInPresentTimeline = true;
     [SerializeField] private SpriteRenderer presentPotSpriteRenderer;
     [SerializeField] private Sprite bloomedPresentSprite;
+    [SerializeField] private GameObject ladder;
 
     private Sprite defaultPresentSprite;
 
@@ -46,6 +47,7 @@ public class PotManager : MonoBehaviour
 
         if (presentTimelinePot == null)
         {
+            UpdateLadderState();
             return;
         }
 
@@ -56,12 +58,14 @@ public class PotManager : MonoBehaviour
         }
 
         UpdatePresentPotSprite();
+        UpdateLadderState();
     }
 
     private void LateUpdate()
     {
         if (pastTimelinePot == null || presentTimelinePot == null)
         {
+            UpdateLadderState();
             return;
         }
 
@@ -77,6 +81,7 @@ public class PotManager : MonoBehaviour
         }
 
         UpdatePresentPotSprite();
+        UpdateLadderState();
     }
 
     private Vector3 GetPresentTimelinePosition(Vector3 pastWorldPosition)
@@ -99,5 +104,15 @@ public class PotManager : MonoBehaviour
         {
             presentPotSpriteRenderer.sprite = targetSprite;
         }
+    }
+
+    private void UpdateLadderState()
+    {
+        if (ladder == null)
+        {
+            return;
+        }
+
+        ladder.SetActive(IsPotAtBloomTarget);
     }
 }
