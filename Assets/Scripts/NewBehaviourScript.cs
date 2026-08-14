@@ -29,6 +29,19 @@ public class NewBehaviourScript : MonoBehaviour
         verticalInput = Input.GetAxisRaw("Vertical");
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
 
+        if (horizontalInput > 0f)
+        {
+            Vector3 scale = transform.localScale;
+            scale.x = Mathf.Abs(scale.x);
+            transform.localScale = scale;
+        }
+        else if (horizontalInput < 0f)
+        {
+            Vector3 scale = transform.localScale;
+            scale.x = -Mathf.Abs(scale.x);
+            transform.localScale = scale;
+        }
+
         if (isInLadderArea && Mathf.Abs(verticalInput) > 0f)
         {
             isClimbing = true;
