@@ -3,6 +3,14 @@ using UnityEngine;
 [DefaultExecutionOrder(200)]
 public class PotManager : MonoBehaviour
 {
+    private enum PotType
+    {
+        Vine,
+        Mushroom,
+        Cactus
+    }
+
+    [SerializeField] private PotType potType = PotType.Vine;
     [SerializeField] private Pot pastTimelinePot;
     [SerializeField] private Transform presentTimelinePot;
     [SerializeField] private float timelineOffset = 50f;
@@ -11,6 +19,8 @@ public class PotManager : MonoBehaviour
     [SerializeField] private SpriteRenderer presentPotSpriteRenderer;
     [SerializeField] private Sprite bloomedPresentSprite;
     [SerializeField] private GameObject ladder;
+    [SerializeField] private GameObject mushroomTrampoline;
+    [SerializeField] private GameObject cactusLaserBlocker;
 
     private Sprite defaultPresentSprite;
 
@@ -47,7 +57,7 @@ public class PotManager : MonoBehaviour
 
         if (presentTimelinePot == null)
         {
-            UpdateLadderState();
+            UpdatePotFeatureState();
             return;
         }
 
@@ -58,14 +68,14 @@ public class PotManager : MonoBehaviour
         }
 
         UpdatePresentPotSprite();
-        UpdateLadderState();
+        UpdatePotFeatureState();
     }
 
     private void LateUpdate()
     {
         if (pastTimelinePot == null || presentTimelinePot == null)
         {
-            UpdateLadderState();
+            UpdatePotFeatureState();
             return;
         }
 
@@ -81,7 +91,7 @@ public class PotManager : MonoBehaviour
         }
 
         UpdatePresentPotSprite();
-        UpdateLadderState();
+        UpdatePotFeatureState();
     }
 
     private Vector3 GetPresentTimelinePosition(Vector3 pastWorldPosition)
@@ -106,13 +116,23 @@ public class PotManager : MonoBehaviour
         }
     }
 
-    private void UpdateLadderState()
+    private void UpdatePotFeatureState()
     {
-        if (ladder == null)
+        bool shouldActivateFeature = IsPotAtBloomTarget;
+
+        if (ladder != null)
         {
-            return;
+            ladder.SetActive(shouldActivateFeature && potType == PotType.Vine);
         }
 
-        ladder.SetActive(IsPotAtBloomTarget);
+        if (mushroomTrampoline != null)
+        {
+            mushroomTrampoline.SetActive(shouldActivateFeature && potType == PotType.Mushroom);
+        }
+
+        if (cactusLaserBlocker != null)
+        {
+            cactusLaserBlocker.SetActive(shouldActivateFeature && potType == PotType.Cactus);
+        }
     }
 }
