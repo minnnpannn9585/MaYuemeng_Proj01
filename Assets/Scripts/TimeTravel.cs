@@ -1,28 +1,24 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class TimeTravel : MonoBehaviour
 {
     [SerializeField] private float travelDistance = 50f;
-    [SerializeField] private Pot carriedPot;
 
     private bool isInPastTimeline;
+    private PotManager[] potManagers = System.Array.Empty<PotManager>();
 
     public bool IsInPastTimeline => isInPastTimeline;
 
     private void Start()
     {
-        TryResolveCarriedPot();
+        CachePotManagers();
     }
 
     private void Update()
     {
-        TryResolveCarriedPot();
-
         if (Input.GetKeyDown(KeyCode.R))
         {
-            if (carriedPot != null && carriedPot.IsHeld)
+            if (IsAnyPastPotHeld())
             {
                 return;
             }
@@ -38,17 +34,34 @@ public class TimeTravel : MonoBehaviour
         isInPastTimeline = !isInPastTimeline;
     }
 
-    private void TryResolveCarriedPot()
+    private void CachePotManagers()
     {
-        if (carriedPot != null)
+        potManagers = FindObjectsByType<PotManager>(FindObjectsSortMode.None);
+    }
+
+    private bool IsAnyPastPotHeld()
+    {
+        if (potManagers == null || potManagers.Length == 0)
         {
-            return;
+            CachePotManagers();
         }
 
-        PotManager potManager = FindFirstObjectByType<PotManager>();
-        if (potManager != null)
+        for (int i = 0; i < potManagers.Length; i++)
         {
-            carriedPot = potManager.PastTimelinePot;
+            PotManager potManager = potManagers[i];
+            if (potManager == null)
+            {
+                CachePotManagers();
+                break;
+            }
+
+            Pot pastPot = potManager.PastTimelinePot;
+            if (pastPot != null && pastPot.IsHeld)
+            {
+                return true;
+            }
         }
+
+        return false;
     }
 }
