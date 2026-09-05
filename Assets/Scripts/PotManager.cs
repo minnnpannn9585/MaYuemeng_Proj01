@@ -1,16 +1,19 @@
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 [DefaultExecutionOrder(200)]
 public class PotManager : MonoBehaviour
 {
     private const string GeneratedMushroomTrampolineName = "MushroomBouncePad";
     private const string GeneratedCactusLaserBlockerName = "CactusLaserBlocker";
+    private const string GeneratedGlowRevealAreaName = "GlowRevealArea";
 
     private enum PotType
     {
         Vine,
         Mushroom,
-        Cactus
+        Cactus,
+        Glow
     }
 
     [SerializeField] private PotType potType = PotType.Vine;
@@ -25,10 +28,24 @@ public class PotManager : MonoBehaviour
     [SerializeField] private GameObject mushroomTrampoline;
     [SerializeField] private float mushroomBounceVelocity = 8f;
     [SerializeField] private GameObject cactusLaserBlocker;
+    [SerializeField] private GameObject glowRevealArea;
+    [SerializeField] private LayerMask glowRevealMask = ~0;
+    [SerializeField] private Vector2 glowAreaSize = new Vector2(6f, 3f);
+    [SerializeField] private float glowAreaForwardOffset = 3f;
+    [SerializeField] private float glowAreaVerticalOffset = 1.25f;
+    [SerializeField] private bool glowFacesRight = true;
+    [SerializeField] private Color glowPresentTint = new Color(0.9f, 1f, 0.65f, 1f);
+    [SerializeField] private Color glowLightColor = new Color(1f, 0.96f, 0.76f, 1f);
+    [SerializeField] private float glowLightIntensity = 0.8f;
+    [SerializeField] private float glowLightRadius = 5.5f;
 
     private Sprite defaultPresentSprite;
+    private Color defaultPresentColor = Color.white;
     private BoxCollider2D mushroomBouncePadCollider;
     private BoxCollider2D cactusLaserBlockerCollider;
+    private BoxCollider2D glowRevealAreaCollider;
+    private GlowRevealArea glowRevealAreaBehaviour;
+    private Light2D glowLight;
 
     public Pot PastTimelinePot => pastTimelinePot;
     public Transform PresentTimelinePot => presentTimelinePot;
@@ -59,10 +76,12 @@ public class PotManager : MonoBehaviour
         if (presentPotSpriteRenderer != null)
         {
             defaultPresentSprite = presentPotSpriteRenderer.sprite;
+            defaultPresentColor = presentPotSpriteRenderer.color;
         }
 
         EnsureMushroomTrampoline();
         EnsureCactusLaserBlocker();
+        EnsureGlowRevealArea();
 
         if (presentTimelinePot == null)
         {
@@ -102,6 +121,7 @@ public class PotManager : MonoBehaviour
         UpdatePresentPotSprite();
         EnsureMushroomTrampoline();
         EnsureCactusLaserBlocker();
+        EnsureGlowRevealArea();
         UpdatePotFeatureState();
     }
 
@@ -126,6 +146,10 @@ public class PotManager : MonoBehaviour
         {
             presentPotSpriteRenderer.sprite = targetSprite;
         }
+
+        presentPotSpriteRenderer.color = potType == PotType.Glow
+            ? glowPresentTint
+            : defaultPresentColor;
     }
 
     private void UpdatePotFeatureState()
@@ -145,6 +169,11 @@ public class PotManager : MonoBehaviour
         if (cactusLaserBlocker != null)
         {
             cactusLaserBlocker.SetActive(shouldActivateFeature && potType == PotType.Cactus);
+        }
+
+        if (glowRevealArea != null)
+        {
+            glowRevealArea.SetActive(shouldActivateFeature && potType == PotType.Glow);
         }
     }
 
@@ -222,7 +251,9 @@ public class PotManager : MonoBehaviour
         }
 
         Sprite referenceSprite = presentPotSpriteRenderer != null ? presentPotSpriteRenderer.sprite : null;
-        Vector2 spriteSize = referenceSprite != null ? referenceSprite.bounds.size : Vector2.one;
+        Vector2 spriteSize = referenceSprite != null
+            ? new Vector2(referenceSprite.bounds.size.x, referenceSprite.bounds.size.y)
+            : Vector2.one;
         float topY = referenceSprite != null ? referenceSprite.bounds.max.y : 0.5f;
         float padWidth = Mathf.Max(0.5f, spriteSize.x * 0.7f);
         float padHeight = Mathf.Max(0.18f, spriteSize.y * 0.18f);
@@ -293,13 +324,139 @@ public class PotManager : MonoBehaviour
         }
 
         Sprite referenceSprite = presentPotSpriteRenderer != null ? presentPotSpriteRenderer.sprite : null;
-        Vector2 spriteSize = referenceSprite != null ? referenceSprite.bounds.size : Vector2.one;
-        Vector2 spriteCenter = referenceSprite != null ? referenceSprite.bounds.center : Vector2.zero;
+        Vector2 spriteSize = referenceSprite != null
+            ? new Vector2(referenceSprite.bounds.size.x, referenceSprite.bounds.size.y)
+            : Vector2.one;
+        Vector2 spriteCenter = referenceSprite != null
+            ? new Vector2(referenceSprite.bounds.center.x, referenceSprite.bounds.center.y)
+            : Vector2.zero;
         float blockerWidth = Mathf.Max(0.4f, spriteSize.x * 0.55f);
         float blockerHeight = Mathf.Max(0.4f, spriteSize.y * 0.7f);
 
         cactusLaserBlocker.transform.localPosition = new Vector3(spriteCenter.x, spriteCenter.y, 0f);
         cactusLaserBlockerCollider.offset = Vector2.zero;
         cactusLaserBlockerCollider.size = new Vector2(blockerWidth, blockerHeight);
+    }
+
+    private void EnsureGlowRevealArea()
+    {
+        if (potType != PotType.Glow || presentTimelinePot == null)
+        {
+            return;
+        }
+
+        if (glowRevealArea == null)
+        {
+            glowRevealAreaBehaviour = presentTimelinePot.GetComponentInChildren<GlowRevealArea>(true);
+            glowRevealArea = glowRevealAreaBehaviour != null
+                ? glowRevealAreaBehaviour.gameObject
+                : CreateGlowRevealArea();
+        }
+
+        if (glowRevealArea == null)
+        {
+            return;
+        }
+
+        glowRevealArea.layer = presentTimelinePot.gameObject.layer;
+
+        if (glowRevealArea.transform.parent != presentTimelinePot)
+        {
+            glowRevealArea.transform.SetParent(presentTimelinePot, false);
+        }
+
+        glowRevealAreaCollider = glowRevealArea.GetComponent<BoxCollider2D>();
+        if (glowRevealAreaCollider == null)
+        {
+            glowRevealAreaCollider = glowRevealArea.AddComponent<BoxCollider2D>();
+        }
+
+        glowRevealAreaCollider.isTrigger = true;
+
+        glowRevealAreaBehaviour = glowRevealArea.GetComponent<GlowRevealArea>();
+        if (glowRevealAreaBehaviour == null)
+        {
+            glowRevealAreaBehaviour = glowRevealArea.AddComponent<GlowRevealArea>();
+        }
+
+        glowRevealAreaBehaviour.RevealMask = glowRevealMask;
+
+        glowLight = glowRevealArea.GetComponent<Light2D>();
+        if (glowLight == null)
+        {
+            glowLight = glowRevealArea.AddComponent<Light2D>();
+        }
+
+        ConfigureGlowLight();
+        UpdateGlowRevealAreaGeometry();
+    }
+
+    private GameObject CreateGlowRevealArea()
+    {
+        GameObject revealArea = new GameObject(GeneratedGlowRevealAreaName);
+        revealArea.transform.SetParent(presentTimelinePot, false);
+        revealArea.transform.localRotation = Quaternion.identity;
+        revealArea.transform.localScale = Vector3.one;
+        revealArea.SetActive(false);
+        return revealArea;
+    }
+
+    private void ConfigureGlowLight()
+    {
+        if (glowLight == null)
+        {
+            return;
+        }
+
+        glowLight.lightType = Light2D.LightType.Point;
+        glowLight.color = glowLightColor;
+        glowLight.intensity = glowLightIntensity;
+        glowLight.pointLightInnerAngle = 40f;
+        glowLight.pointLightOuterAngle = 75f;
+    }
+
+    private void UpdateGlowRevealAreaGeometry()
+    {
+        if (glowRevealArea == null || glowRevealAreaCollider == null)
+        {
+            return;
+        }
+
+        Sprite referenceSprite = presentPotSpriteRenderer != null ? presentPotSpriteRenderer.sprite : null;
+        Vector2 spriteSize = referenceSprite != null
+            ? new Vector2(referenceSprite.bounds.size.x, referenceSprite.bounds.size.y)
+            : Vector2.one;
+        Vector2 spriteCenter = referenceSprite != null
+            ? new Vector2(referenceSprite.bounds.center.x, referenceSprite.bounds.center.y)
+            : new Vector2(0f, 0.5f);
+        float directionSign = glowFacesRight ? 1f : -1f;
+
+        if (presentPotSpriteRenderer != null && presentPotSpriteRenderer.flipX)
+        {
+            directionSign *= -1f;
+        }
+        else if (presentTimelinePot.lossyScale.x < 0f)
+        {
+            directionSign *= -1f;
+        }
+
+        float revealWidth = Mathf.Max(glowAreaSize.x, spriteSize.x * 1.8f);
+        float revealHeight = Mathf.Max(glowAreaSize.y, spriteSize.y * 1.15f);
+        float revealForwardOffset = Mathf.Max(glowAreaForwardOffset, (spriteSize.x * 0.5f) + (revealWidth * 0.5f) - 0.2f);
+
+        glowRevealArea.transform.localPosition = new Vector3(
+            spriteCenter.x + (directionSign * revealForwardOffset),
+            spriteCenter.y + glowAreaVerticalOffset,
+            0f);
+        glowRevealArea.transform.localRotation = Quaternion.Euler(0f, 0f, directionSign >= 0f ? 0f : 180f);
+
+        glowRevealAreaCollider.offset = Vector2.zero;
+        glowRevealAreaCollider.size = new Vector2(revealWidth, revealHeight);
+
+        if (glowLight != null)
+        {
+            glowLight.pointLightInnerRadius = Mathf.Max(1f, glowLightRadius * 0.35f);
+            glowLight.pointLightOuterRadius = Mathf.Max(glowLightRadius, revealWidth);
+        }
     }
 }

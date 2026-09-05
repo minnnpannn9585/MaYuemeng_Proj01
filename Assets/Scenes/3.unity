@@ -12580,12 +12580,12 @@ GameObject:
   - component: {fileID: 1393404222}
   - component: {fileID: 1393404221}
   m_Layer: 0
-  m_Name: pots_cactus
+  m_Name: pots_glow
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1393404221
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12598,7 +12598,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5793edf09bff34ca7b0f089347906cec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  potType: 2
+  potType: 3
   pastTimelinePot: {fileID: 19885327}
   presentTimelinePot: {fileID: 1522169135}
   timelineOffset: 50
@@ -12619,7 +12619,7 @@ Transform:
   m_GameObject: {fileID: 1393404220}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.24, y: 0.39, z: 0}
+  m_LocalPosition: {x: 32.95, y: 4.92, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
