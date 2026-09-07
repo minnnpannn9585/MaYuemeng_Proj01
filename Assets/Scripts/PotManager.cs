@@ -30,22 +30,14 @@ public class PotManager : MonoBehaviour
     [SerializeField] private GameObject cactusLaserBlocker;
     [SerializeField] private GameObject glowRevealArea;
     [SerializeField] private LayerMask glowRevealMask = ~0;
-    [SerializeField] private Vector2 glowAreaSize = new Vector2(6f, 3f);
-    [SerializeField] private float glowAreaForwardOffset = 3f;
-    [SerializeField] private float glowAreaVerticalOffset = 1.25f;
-    [SerializeField] private bool glowFacesRight = true;
+    [SerializeField] private Sprite glowSprite;
     [SerializeField] private Color glowPresentTint = new Color(0.9f, 1f, 0.65f, 1f);
-    [SerializeField] private Color glowLightColor = new Color(1f, 0.96f, 0.76f, 1f);
-    [SerializeField] private float glowLightIntensity = 0.8f;
-    [SerializeField] private float glowLightRadius = 5.5f;
 
     private Sprite defaultPresentSprite;
     private Color defaultPresentColor = Color.white;
     private BoxCollider2D mushroomBouncePadCollider;
     private BoxCollider2D cactusLaserBlockerCollider;
-    private BoxCollider2D glowRevealAreaCollider;
     private GlowRevealArea glowRevealAreaBehaviour;
-    private Light2D glowLight;
 
     public Pot PastTimelinePot => pastTimelinePot;
     public Transform PresentTimelinePot => presentTimelinePot;
@@ -358,20 +350,10 @@ public class PotManager : MonoBehaviour
             return;
         }
 
-        glowRevealArea.layer = presentTimelinePot.gameObject.layer;
-
         if (glowRevealArea.transform.parent != presentTimelinePot)
         {
-            glowRevealArea.transform.SetParent(presentTimelinePot, false);
+            glowRevealArea.transform.SetParent(presentTimelinePot, true);
         }
-
-        glowRevealAreaCollider = glowRevealArea.GetComponent<BoxCollider2D>();
-        if (glowRevealAreaCollider == null)
-        {
-            glowRevealAreaCollider = glowRevealArea.AddComponent<BoxCollider2D>();
-        }
-
-        glowRevealAreaCollider.isTrigger = true;
 
         glowRevealAreaBehaviour = glowRevealArea.GetComponent<GlowRevealArea>();
         if (glowRevealAreaBehaviour == null)
@@ -381,82 +363,38 @@ public class PotManager : MonoBehaviour
 
         glowRevealAreaBehaviour.RevealMask = glowRevealMask;
 
-        glowLight = glowRevealArea.GetComponent<Light2D>();
-        if (glowLight == null)
+        if (glowRevealArea.GetComponent<Collider2D>() == null)
         {
-            glowLight = glowRevealArea.AddComponent<Light2D>();
+            BoxCollider2D boxCollider = glowRevealArea.AddComponent<BoxCollider2D>();
+            boxCollider.isTrigger = true;
         }
 
-        ConfigureGlowLight();
-        UpdateGlowRevealAreaGeometry();
+        SpriteRenderer spriteRenderer = glowRevealArea.GetComponent<SpriteRenderer>();
+        if (spriteRenderer == null)
+        {
+            spriteRenderer = glowRevealArea.AddComponent<SpriteRenderer>();
+        }
+
+        if (glowSprite != null)
+        {
+            spriteRenderer.sprite = glowSprite;
+        }
+
+        Light2D leftoverLight = glowRevealArea.GetComponent<Light2D>();
+        if (leftoverLight != null)
+        {
+            leftoverLight.enabled = false;
+        }
     }
 
     private GameObject CreateGlowRevealArea()
     {
         GameObject revealArea = new GameObject(GeneratedGlowRevealAreaName);
         revealArea.transform.SetParent(presentTimelinePot, false);
+        revealArea.transform.localPosition = new Vector3(1.5f, 0.5f, 0f);
         revealArea.transform.localRotation = Quaternion.identity;
         revealArea.transform.localScale = Vector3.one;
         revealArea.SetActive(false);
         return revealArea;
-    }
-
-    private void ConfigureGlowLight()
-    {
-        if (glowLight == null)
-        {
-            return;
-        }
-
-        glowLight.lightType = Light2D.LightType.Point;
-        glowLight.color = glowLightColor;
-        glowLight.intensity = glowLightIntensity;
-        glowLight.pointLightInnerAngle = 40f;
-        glowLight.pointLightOuterAngle = 75f;
-    }
-
-    private void UpdateGlowRevealAreaGeometry()
-    {
-        if (glowRevealArea == null || glowRevealAreaCollider == null)
-        {
-            return;
-        }
-
-        Sprite referenceSprite = presentPotSpriteRenderer != null ? presentPotSpriteRenderer.sprite : null;
-        Vector2 spriteSize = referenceSprite != null
-            ? new Vector2(referenceSprite.bounds.size.x, referenceSprite.bounds.size.y)
-            : Vector2.one;
-        Vector2 spriteCenter = referenceSprite != null
-            ? new Vector2(referenceSprite.bounds.center.x, referenceSprite.bounds.center.y)
-            : new Vector2(0f, 0.5f);
-        float directionSign = glowFacesRight ? 1f : -1f;
-
-        if (presentPotSpriteRenderer != null && presentPotSpriteRenderer.flipX)
-        {
-            directionSign *= -1f;
-        }
-        else if (presentTimelinePot.lossyScale.x < 0f)
-        {
-            directionSign *= -1f;
-        }
-
-        float revealWidth = Mathf.Max(glowAreaSize.x, spriteSize.x * 1.8f);
-        float revealHeight = Mathf.Max(glowAreaSize.y, spriteSize.y * 1.15f);
-        float revealForwardOffset = Mathf.Max(glowAreaForwardOffset, (spriteSize.x * 0.5f) + (revealWidth * 0.5f) - 0.2f);
-
-        glowRevealArea.transform.localPosition = new Vector3(
-            spriteCenter.x + (directionSign * revealForwardOffset),
-            spriteCenter.y + glowAreaVerticalOffset,
-            0f);
-        glowRevealArea.transform.localRotation = Quaternion.Euler(0f, 0f, directionSign >= 0f ? 0f : 180f);
-
-        glowRevealAreaCollider.offset = Vector2.zero;
-        glowRevealAreaCollider.size = new Vector2(revealWidth, revealHeight);
-
-        if (glowLight != null)
-        {
-            glowLight.pointLightInnerRadius = Mathf.Max(1f, glowLightRadius * 0.35f);
-            glowLight.pointLightOuterRadius = Mathf.Max(glowLightRadius, revealWidth);
-        }
     }
 }
