@@ -10,7 +10,8 @@ public class Pot : MonoBehaviour
     [SerializeField] private float interactDistance = 1.5f;
     [SerializeField] private bool canBePickedUp = true;
     [SerializeField] private LayerMask obstructionMask = ~0;
-    [SerializeField] private float contactOffset = 0.02f;
+    [SerializeField] private float contactOffset = 0.03f;
+    [SerializeField] private int depenetrationIterations = 4;
 
     private Rigidbody2D rb;
     private Collider2D potCollider;
@@ -18,11 +19,13 @@ public class Pot : MonoBehaviour
     private Collider2D[] playerColliders;
     private Transform originalParent;
     private bool isHeld;
+    private bool hasValidHeldPosition;
+    private Vector2 lastValidHeldPosition;
     private RigidbodyType2D originalBodyType;
     private float originalGravityScale;
     private RigidbodyConstraints2D originalConstraints;
-    private readonly RaycastHit2D[] castHits = new RaycastHit2D[8];
-    private readonly Collider2D[] overlapHits = new Collider2D[8];
+    private readonly RaycastHit2D[] castHits = new RaycastHit2D[16];
+    private readonly Collider2D[] overlapHits = new Collider2D[16];
     private ContactFilter2D obstructionFilter;
 
     public bool IsHeld => isHeld;
@@ -91,6 +94,7 @@ public class Pot : MonoBehaviour
     private void PickUp()
     {
         isHeld = true;
+        hasValidHeldPosition = false;
 
         if (rb != null)
         {
@@ -111,11 +115,16 @@ public class Pot : MonoBehaviour
         }
 
         SetPlayerCollisionIgnored(true);
+
+        Vector2 start = rb != null ? rb.position : (Vector2)transform.position;
+        SetPotPosition(Depenetrate(start));
+        RememberValidHeldPosition();
     }
 
     private void Drop()
     {
         isHeld = false;
+        hasValidHeldPosition = false;
         transform.SetParent(originalParent, true);
 
         if (rb != null)
@@ -171,20 +180,32 @@ public class Pot : MonoBehaviour
 
     private Vector2 ResolveHeldPosition(Vector2 current, Vector2 desired)
     {
-        Vector2 next = current;
+        Vector2 next = Depenetrate(current);
 
         SetPotPosition(next);
         Physics2D.SyncTransforms();
-        next.x += CastMovement(new Vector2(desired.x - next.x, 0f)).x;
+        if (IsOverlappingSolid())
+        {
+            return hasValidHeldPosition ? lastValidHeldPosition : next;
+        }
+
+        next += CastMovement(new Vector2(desired.x - next.x, 0f));
+        next = Depenetrate(next);
 
         SetPotPosition(next);
         Physics2D.SyncTransforms();
-        next.y += CastMovement(new Vector2(0f, desired.y - next.y)).y;
+        next += CastMovement(new Vector2(0f, desired.y - next.y));
+        next = Depenetrate(next);
 
         SetPotPosition(next);
         Physics2D.SyncTransforms();
-        next += GetDepenetration();
+        if (IsOverlappingSolid())
+        {
+            return hasValidHeldPosition ? lastValidHeldPosition : next;
+        }
 
+        lastValidHeldPosition = next;
+        hasValidHeldPosition = true;
         return next;
     }
 
@@ -197,18 +218,18 @@ public class Pot : MonoBehaviour
         }
 
         Vector2 direction = delta / distance;
-        int hitCount = potCollider.Cast(direction, obstructionFilter, castHits, distance);
+        int hitCount = potCollider.Cast(direction, obstructionFilter, castHits, distance + contactOffset);
         float allowed = distance;
 
         for (int i = 0; i < hitCount; i++)
         {
-            Collider2D hit = castHits[i].collider;
-            if (!IsSolidObstruction(hit))
+            RaycastHit2D hit = castHits[i];
+            if (!IsSolidObstruction(hit.collider) || hit.distance < 0f)
             {
                 continue;
             }
 
-            float travel = Mathf.Max(0f, castHits[i].distance - contactOffset);
+            float travel = Mathf.Max(0f, hit.distance - contactOffset);
             if (travel < allowed)
             {
                 allowed = travel;
@@ -218,7 +239,31 @@ public class Pot : MonoBehaviour
         return direction * allowed;
     }
 
-    private Vector2 GetDepenetration()
+    private Vector2 Depenetrate(Vector2 origin)
+    {
+        Vector2 next = origin;
+        int iterations = Mathf.Max(1, depenetrationIterations);
+
+        for (int i = 0; i < iterations; i++)
+        {
+            SetPotPosition(next);
+            Physics2D.SyncTransforms();
+
+            Vector2 push = GetDeepestSeparation();
+            if (push.sqrMagnitude < 0.000001f)
+            {
+                break;
+            }
+
+            next += push;
+        }
+
+        SetPotPosition(next);
+        Physics2D.SyncTransforms();
+        return next;
+    }
+
+    private Vector2 GetDeepestSeparation()
     {
         if (potCollider == null)
         {
@@ -226,7 +271,8 @@ public class Pot : MonoBehaviour
         }
 
         int overlapCount = potCollider.OverlapCollider(obstructionFilter, overlapHits);
-        Vector2 correction = Vector2.zero;
+        float deepest = 0f;
+        Vector2 separation = Vector2.zero;
 
         for (int i = 0; i < overlapCount; i++)
         {
@@ -237,13 +283,60 @@ public class Pot : MonoBehaviour
             }
 
             ColliderDistance2D distance = potCollider.Distance(hit);
-            if (distance.isOverlapped)
+            if (!distance.isValid || !distance.isOverlapped)
             {
-                correction += distance.normal * -distance.distance;
+                continue;
+            }
+
+            float penetration = distance.distance - contactOffset;
+            if (penetration >= deepest)
+            {
+                continue;
+            }
+
+            deepest = penetration;
+            separation = distance.normal * penetration;
+        }
+
+        return separation;
+    }
+
+    private bool IsOverlappingSolid()
+    {
+        if (potCollider == null)
+        {
+            return false;
+        }
+
+        int overlapCount = potCollider.OverlapCollider(obstructionFilter, overlapHits);
+        for (int i = 0; i < overlapCount; i++)
+        {
+            Collider2D hit = overlapHits[i];
+            if (!IsSolidObstruction(hit))
+            {
+                continue;
+            }
+
+            ColliderDistance2D distance = potCollider.Distance(hit);
+            if (distance.isValid && distance.isOverlapped)
+            {
+                return true;
             }
         }
 
-        return correction;
+        return false;
+    }
+
+    private void RememberValidHeldPosition()
+    {
+        Vector2 current = rb != null ? rb.position : (Vector2)transform.position;
+        SetPotPosition(current);
+        Physics2D.SyncTransforms();
+        if (!IsOverlappingSolid())
+        {
+            lastValidHeldPosition = current;
+            hasValidHeldPosition = true;
+        }
     }
 
     private bool IsSolidObstruction(Collider2D hit)

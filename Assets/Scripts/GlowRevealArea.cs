@@ -30,12 +30,14 @@ public class GlowRevealArea : MonoBehaviour
         ResolveCollider();
         EnsureHiddenPlatformsOnRevealLayer();
         RefreshRevealedPlatforms();
+        RefreshIlluminatedBats();
     }
 
     private void LateUpdate()
     {
         ResolveCollider();
         RefreshRevealedPlatforms();
+        RefreshIlluminatedBats();
     }
 
     private void OnDisable()
@@ -60,6 +62,29 @@ public class GlowRevealArea : MonoBehaviour
             }
 
             spriteRenderer.gameObject.AddComponent<HiddenPlatformReveal>();
+        }
+    }
+
+    private void RefreshIlluminatedBats()
+    {
+        if (revealCollider == null || IsPlayerInPastTimeline())
+        {
+            return;
+        }
+
+        Bat[] bats = FindObjectsByType<Bat>(FindObjectsSortMode.None);
+        for (int i = 0; i < bats.Length; i++)
+        {
+            Bat bat = bats[i];
+            if (bat == null || bat.IsFleeing)
+            {
+                continue;
+            }
+
+            if (IsInsideGlowArea(bat.WorldBounds))
+            {
+                bat.StartFleeing();
+            }
         }
     }
 
