@@ -7,13 +7,15 @@ public class PotManager : MonoBehaviour
     private const string GeneratedMushroomTrampolineName = "MushroomBouncePad";
     private const string GeneratedCactusLaserBlockerName = "CactusLaserBlocker";
     private const string GeneratedGlowRevealAreaName = "GlowRevealArea";
+    private const string GeneratedWindAreaName = "WindArea";
 
     private enum PotType
     {
         Vine,
         Mushroom,
         Cactus,
-        Glow
+        Glow,
+        Wind
     }
 
     [SerializeField] private PotType potType = PotType.Vine;
@@ -32,12 +34,20 @@ public class PotManager : MonoBehaviour
     [SerializeField] private LayerMask glowRevealMask = ~0;
     [SerializeField] private Sprite glowSprite;
     [SerializeField] private Color glowPresentTint = new Color(0.9f, 1f, 0.65f, 1f);
+    [SerializeField] private GameObject windArea;
+    [SerializeField] private Sprite windSprite;
+    [SerializeField] private float windForce = 15f;
+    [SerializeField] private float windUpBoost = 4f;
+    [SerializeField] private float windDuration = 0.6f;
 
     private Sprite defaultPresentSprite;
     private Color defaultPresentColor = Color.white;
+    private Animator presentPotAnimator;
     private BoxCollider2D mushroomBouncePadCollider;
     private BoxCollider2D cactusLaserBlockerCollider;
     private GlowRevealArea glowRevealAreaBehaviour;
+    private WindArea windAreaBehaviour;
+    private bool windAreaConfigLogged;
 
     public Pot PastTimelinePot => pastTimelinePot;
     public Transform PresentTimelinePot => presentTimelinePot;
@@ -69,11 +79,17 @@ public class PotManager : MonoBehaviour
         {
             defaultPresentSprite = presentPotSpriteRenderer.sprite;
             defaultPresentColor = presentPotSpriteRenderer.color;
+            presentPotAnimator = presentPotSpriteRenderer.GetComponent<Animator>();
+            if (presentPotAnimator == null && presentTimelinePot != null)
+            {
+                presentPotAnimator = presentTimelinePot.GetComponentInChildren<Animator>();
+            }
         }
 
         EnsureMushroomTrampoline();
         EnsureCactusLaserBlocker();
         EnsureGlowRevealArea();
+        EnsureWindArea();
 
         if (presentTimelinePot == null)
         {
@@ -114,6 +130,7 @@ public class PotManager : MonoBehaviour
         EnsureMushroomTrampoline();
         EnsureCactusLaserBlocker();
         EnsureGlowRevealArea();
+        EnsureWindArea();
         UpdatePotFeatureState();
     }
 
@@ -130,13 +147,21 @@ public class PotManager : MonoBehaviour
         }
 
         bool useBloomedSprite = potType == PotType.Vine && IsPotAtBloomTarget && bloomedPresentSprite != null;
-        Sprite targetSprite = useBloomedSprite
-            ? bloomedPresentSprite
-            : defaultPresentSprite;
 
-        if (targetSprite != null)
+        bool animatorDrivingSprite = presentPotAnimator != null
+            && presentPotAnimator.enabled
+            && presentPotAnimator.runtimeAnimatorController != null;
+
+        if (!animatorDrivingSprite || useBloomedSprite)
         {
-            presentPotSpriteRenderer.sprite = targetSprite;
+            Sprite targetSprite = useBloomedSprite
+                ? bloomedPresentSprite
+                : defaultPresentSprite;
+
+            if (targetSprite != null)
+            {
+                presentPotSpriteRenderer.sprite = targetSprite;
+            }
         }
 
         presentPotSpriteRenderer.color = potType == PotType.Glow
@@ -166,6 +191,11 @@ public class PotManager : MonoBehaviour
         if (glowRevealArea != null)
         {
             glowRevealArea.SetActive(shouldActivateFeature && potType == PotType.Glow);
+        }
+
+        if (windArea != null)
+        {
+            windArea.SetActive(shouldActivateFeature && potType == PotType.Wind);
         }
     }
 
@@ -396,5 +426,77 @@ public class PotManager : MonoBehaviour
         revealArea.transform.localScale = Vector3.one;
         revealArea.SetActive(false);
         return revealArea;
+    }
+
+    private void EnsureWindArea()
+    {
+        if (potType != PotType.Wind || presentTimelinePot == null)
+        {
+            return;
+        }
+
+        if (windArea == null)
+        {
+            windAreaBehaviour = presentTimelinePot.GetComponentInChildren<WindArea>(true);
+            windArea = windAreaBehaviour != null
+                ? windAreaBehaviour.gameObject
+                : CreateWindArea();
+        }
+
+        if (windArea == null)
+        {
+            return;
+        }
+
+        if (windArea.transform.parent != presentTimelinePot)
+        {
+            windArea.transform.SetParent(presentTimelinePot, true);
+        }
+
+        windAreaBehaviour = windArea.GetComponent<WindArea>();
+        if (windAreaBehaviour == null)
+        {
+            windAreaBehaviour = windArea.AddComponent<WindArea>();
+        }
+
+        windAreaBehaviour.WindForce = windForce;
+        windAreaBehaviour.WindUpBoost = windUpBoost;
+        windAreaBehaviour.WindDuration = windDuration;
+
+        if (windArea.GetComponent<Collider2D>() == null)
+        {
+            BoxCollider2D boxCollider = windArea.AddComponent<BoxCollider2D>();
+            boxCollider.isTrigger = true;
+        }
+
+        SpriteRenderer spriteRenderer = windArea.GetComponent<SpriteRenderer>();
+        if (spriteRenderer == null)
+        {
+            spriteRenderer = windArea.AddComponent<SpriteRenderer>();
+        }
+
+        if (windSprite != null)
+        {
+            spriteRenderer.sprite = windSprite;
+        }
+
+        if (!windAreaConfigLogged)
+        {
+            windAreaConfigLogged = true;
+            Collider2D windCollider = windArea.GetComponent<Collider2D>();
+            string colliderInfo = windCollider != null ? windCollider.bounds.ToString() : "none";
+            Debug.Log($"[Wind] EnsureWindArea configured. potType={potType}, windArea active={windArea.activeInHierarchy}, force={windForce}, collider={colliderInfo}", this);
+        }
+    }
+
+    private GameObject CreateWindArea()
+    {
+        GameObject area = new GameObject(GeneratedWindAreaName);
+        area.transform.SetParent(presentTimelinePot, false);
+        area.transform.localPosition = new Vector3(1.5f, 0.5f, 0f);
+        area.transform.localRotation = Quaternion.identity;
+        area.transform.localScale = Vector3.one;
+        area.SetActive(false);
+        return area;
     }
 }
