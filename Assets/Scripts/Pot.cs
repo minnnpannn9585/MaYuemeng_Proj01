@@ -27,6 +27,8 @@ public class Pot : MonoBehaviour
     private readonly RaycastHit2D[] castHits = new RaycastHit2D[16];
     private readonly Collider2D[] overlapHits = new Collider2D[16];
     private ContactFilter2D obstructionFilter;
+    private Vector2 previousVelocity;
+    private float nextImpactCueTime;
 
     public bool IsHeld => isHeld;
     public bool CanBePickedUp => canBePickedUp;
@@ -91,6 +93,14 @@ public class Pot : MonoBehaviour
         SetPotPosition(ResolveHeldPosition(current, desired));
     }
 
+    private void FixedUpdate()
+    {
+        if (rb != null)
+        {
+            previousVelocity = rb.velocity;
+        }
+    }
+
     private void PickUp()
     {
         isHeld = true;
@@ -119,6 +129,7 @@ public class Pot : MonoBehaviour
         Vector2 start = rb != null ? rb.position : (Vector2)transform.position;
         SetPotPosition(Depenetrate(start));
         RememberValidHeldPosition();
+        InteractionFeedback.Play(InteractionCue.Pickup, transform.position);
     }
 
     private void Drop()
@@ -143,6 +154,31 @@ public class Pot : MonoBehaviour
         }
 
         SetPlayerCollisionIgnored(false);
+        previousVelocity = Vector2.zero;
+        InteractionFeedback.Play(InteractionCue.Drop, transform.position);
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (isHeld || !canBePickedUp || collision.contactCount == 0)
+        {
+            return;
+        }
+
+        if (previousVelocity.y > -1.5f || previousVelocity.magnitude < 2.5f)
+        {
+            return;
+        }
+
+        ContactPoint2D contact = collision.GetContact(0);
+        if (contact.normal.y < 0.35f || Time.time < nextImpactCueTime)
+        {
+            return;
+        }
+
+        nextImpactCueTime = Time.time + 0.08f;
+        InteractionFeedback.Play(InteractionCue.PotImpact, contact.point,
+            intensity: Mathf.Lerp(0.6f, 1.35f, Mathf.InverseLerp(2.5f, 10f, previousVelocity.magnitude)));
     }
 
     public void ConfigureAsPresentMirror()

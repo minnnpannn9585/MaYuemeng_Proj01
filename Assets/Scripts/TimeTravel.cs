@@ -20,10 +20,15 @@ public class TimeTravel : MonoBehaviour
         {
             if (IsAnyPastPotHeld())
             {
+                InteractionFeedback.Play(InteractionCue.Denied, transform.position);
                 return;
             }
 
+            InteractionFeedback.Play(InteractionCue.TimeTravel, transform.position, false, true, 0.7f);
             ToggleTimeTravel();
+            NewBehaviourScript player = GetComponent<NewBehaviourScript>();
+            if (player != null) player.ResetLandingFeedback();
+            InteractionFeedback.Play(InteractionCue.TimeTravel, transform.position);
         }
     }
 

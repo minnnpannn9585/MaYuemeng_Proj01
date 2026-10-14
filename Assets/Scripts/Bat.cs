@@ -52,6 +52,7 @@ public class Bat : MonoBehaviour
         }
 
         isFleeing = true;
+        InteractionFeedback.Play(InteractionCue.BatFlee, WorldBounds.center);
         float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
         fleeDirection = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
 

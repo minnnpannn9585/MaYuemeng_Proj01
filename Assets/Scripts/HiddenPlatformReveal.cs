@@ -13,6 +13,7 @@ public class HiddenPlatformReveal : MonoBehaviour
     private Bounds localBounds = new Bounds(Vector3.zero, Vector3.one);
     private float visibleAmount;
     private float targetVisibleAmount;
+    private float nextRevealCueTime;
 
     public Bounds WorldBounds
     {
@@ -165,10 +166,18 @@ public class HiddenPlatformReveal : MonoBehaviour
     private void ApplyRevealState(bool isRevealed)
     {
         targetVisibleAmount = isRevealed ? 1f : 0f;
-        if (isRevealed)
+        if (!isRevealed)
         {
-            SetComponentsEnabled(true);
-            ApplyVisibility(visibleAmount);
+            return;
+        }
+
+        SetComponentsEnabled(true);
+        ApplyVisibility(visibleAmount);
+
+        if (visibleAmount <= 0.05f && Time.time >= nextRevealCueTime)
+        {
+            nextRevealCueTime = Time.time + 0.45f;
+            InteractionFeedback.Play(InteractionCue.Reveal, WorldBounds.center);
         }
     }
 

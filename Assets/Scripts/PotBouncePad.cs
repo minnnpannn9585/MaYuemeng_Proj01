@@ -60,8 +60,18 @@ public class PotBouncePad : MonoBehaviour
         }
 
         otherRb.velocity = new Vector2(otherRb.velocity.x, bounceVelocity);
+        NewBehaviourScript player = otherRb.GetComponent<NewBehaviourScript>();
+        if (player != null) player.ResetLandingFeedback();
         lastBouncedBody = otherRb;
         lastBounceTime = Time.time;
+
+        Vector3 burstPosition = other.bounds.center;
+        if (bounceCollider != null)
+        {
+            burstPosition.y = bounceCollider.bounds.max.y;
+        }
+
+        InteractionFeedback.Play(InteractionCue.Bounce, burstPosition);
     }
 
     private bool IsEnteringFromAbove(Collider2D other, Vector2 otherVelocity)

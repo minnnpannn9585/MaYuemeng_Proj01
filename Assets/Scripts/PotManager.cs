@@ -13,7 +13,8 @@ public class PotManager : MonoBehaviour
         Vine,
         Mushroom,
         Cactus,
-        Glow
+        Glow,
+        Wind
     }
 
     [SerializeField] private PotType potType = PotType.Vine;
@@ -29,15 +30,20 @@ public class PotManager : MonoBehaviour
     [SerializeField] private float mushroomBounceVelocity = 8f;
     [SerializeField] private GameObject cactusLaserBlocker;
     [SerializeField] private GameObject glowRevealArea;
-    [SerializeField] private LayerMask glowRevealMask = ~0;
+    [SerializeField] private LayerMask glowRevealMask = 1 << 7;
     [SerializeField] private Sprite glowSprite;
     [SerializeField] private Color glowPresentTint = new Color(0.9f, 1f, 0.65f, 1f);
+    [SerializeField] private GameObject windArea;
+    [SerializeField] private float windPushSpeed = 7f;
 
     private Sprite defaultPresentSprite;
     private Color defaultPresentColor = Color.white;
     private BoxCollider2D mushroomBouncePadCollider;
     private BoxCollider2D cactusLaserBlockerCollider;
     private GlowRevealArea glowRevealAreaBehaviour;
+    private bool featureWasActive;
+    private bool featureStateReady;
+    private float nextBloomCueTime;
 
     public Pot PastTimelinePot => pastTimelinePot;
     public Transform PresentTimelinePot => presentTimelinePot;
@@ -74,6 +80,7 @@ public class PotManager : MonoBehaviour
         EnsureMushroomTrampoline();
         EnsureCactusLaserBlocker();
         EnsureGlowRevealArea();
+        EnsureWindArea();
 
         if (presentTimelinePot == null)
         {
@@ -114,6 +121,7 @@ public class PotManager : MonoBehaviour
         EnsureMushroomTrampoline();
         EnsureCactusLaserBlocker();
         EnsureGlowRevealArea();
+        EnsureWindArea();
         UpdatePotFeatureState();
     }
 
@@ -134,7 +142,7 @@ public class PotManager : MonoBehaviour
             ? bloomedPresentSprite
             : defaultPresentSprite;
 
-        if (targetSprite != null)
+        if (potType != PotType.Wind && targetSprite != null)
         {
             presentPotSpriteRenderer.sprite = targetSprite;
         }
@@ -147,6 +155,21 @@ public class PotManager : MonoBehaviour
     private void UpdatePotFeatureState()
     {
         bool shouldActivateFeature = ShouldActivateFeature();
+        if (featureStateReady
+            && potType == PotType.Vine
+            && shouldActivateFeature
+            && !featureWasActive
+            && Time.time >= nextBloomCueTime)
+        {
+            nextBloomCueTime = Time.time + 0.75f;
+            Vector3 bloomPosition = ladder != null
+                ? ladder.transform.position
+                : presentTimelinePot != null ? presentTimelinePot.position : transform.position;
+            InteractionFeedback.Play(InteractionCue.Bloom, bloomPosition);
+        }
+
+        featureWasActive = shouldActivateFeature;
+        featureStateReady = true;
 
         if (ladder != null)
         {
@@ -166,6 +189,11 @@ public class PotManager : MonoBehaviour
         if (glowRevealArea != null)
         {
             glowRevealArea.SetActive(shouldActivateFeature && potType == PotType.Glow);
+        }
+
+        if (windArea != null)
+        {
+            windArea.SetActive(shouldActivateFeature && potType == PotType.Wind);
         }
     }
 
@@ -328,6 +356,45 @@ public class PotManager : MonoBehaviour
         cactusLaserBlocker.transform.localPosition = new Vector3(spriteCenter.x, spriteCenter.y, 0f);
         cactusLaserBlockerCollider.offset = Vector2.zero;
         cactusLaserBlockerCollider.size = new Vector2(blockerWidth, blockerHeight);
+    }
+
+    private void EnsureWindArea()
+    {
+        if (potType != PotType.Wind || presentTimelinePot == null)
+        {
+            return;
+        }
+
+        if (windArea == null)
+        {
+            Transform existing = presentTimelinePot.Find("WindArea");
+            if (existing == null)
+            {
+                WindArea[] areas = presentTimelinePot.GetComponentsInChildren<WindArea>(true);
+                existing = areas.Length > 0 ? areas[0].transform : null;
+            }
+
+            windArea = existing != null ? existing.gameObject : null;
+        }
+
+        if (windArea == null)
+        {
+            return;
+        }
+
+        Collider2D windCollider = windArea.GetComponent<Collider2D>();
+        if (windCollider != null)
+        {
+            windCollider.isTrigger = true;
+        }
+
+        WindArea wind = windArea.GetComponent<WindArea>();
+        if (wind == null)
+        {
+            wind = windArea.AddComponent<WindArea>();
+        }
+
+        wind.PushSpeed = windPushSpeed;
     }
 
     private void EnsureGlowRevealArea()

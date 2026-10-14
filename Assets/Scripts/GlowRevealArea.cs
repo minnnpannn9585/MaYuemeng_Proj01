@@ -5,7 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(Collider2D))]
 public class GlowRevealArea : MonoBehaviour
 {
-    [SerializeField] private LayerMask revealMask = ~0;
+    [SerializeField] private LayerMask revealMask = 1 << 7;
 
     private readonly HashSet<HiddenPlatformReveal> revealedPlatforms = new HashSet<HiddenPlatformReveal>();
     private readonly HashSet<HiddenPlatformReveal> currentFramePlatforms = new HashSet<HiddenPlatformReveal>();
@@ -47,11 +47,16 @@ public class GlowRevealArea : MonoBehaviour
 
     private void EnsureHiddenPlatformsOnRevealLayer()
     {
+        // AddComponent invokes OnEnable before PotManager can assign RevealMask.
+        // Never interpret an initial/broad mask as permission to hide every sprite.
+        int hiddenLayer = LayerMask.NameToLayer("HiddenPlatformReveal");
+        if (hiddenLayer < 0) return;
         SpriteRenderer[] spriteRenderers = FindObjectsByType<SpriteRenderer>(FindObjectsSortMode.None);
         for (int i = 0; i < spriteRenderers.Length; i++)
         {
             SpriteRenderer spriteRenderer = spriteRenderers[i];
-            if (spriteRenderer == null || !MatchesRevealMask(spriteRenderer.gameObject.layer))
+            if (spriteRenderer == null || spriteRenderer.gameObject.layer != hiddenLayer
+                || !MatchesRevealMask(spriteRenderer.gameObject.layer))
             {
                 continue;
             }
