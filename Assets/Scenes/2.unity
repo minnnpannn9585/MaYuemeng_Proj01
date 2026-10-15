@@ -2313,7 +2313,7 @@ MonoBehaviour:
   bloomedPresentSprite: {fileID: 1268143854, guid: 832211c80e19d43878cd710f45430459, type: 3}
   ladder: {fileID: 0}
   mushroomTrampoline: {fileID: 0}
-  mushroomBounceVelocity: 8
+  mushroomBounceVelocity: 10
   cactusLaserBlocker: {fileID: 0}
   glowRevealArea: {fileID: 0}
   glowRevealMask:
@@ -2321,6 +2321,8 @@ MonoBehaviour:
     m_Bits: 4294967295
   glowSprite: {fileID: 0}
   glowPresentTint: {r: 0.9, g: 1, b: 0.65, a: 1}
+  windArea: {fileID: 0}
+  windPushSpeed: 7
 --- !u!4 &160402680
 Transform:
   m_ObjectHideFlags: 0
@@ -13550,6 +13552,8 @@ MonoBehaviour:
     m_Bits: 4294967295
   glowSprite: {fileID: 0}
   glowPresentTint: {r: 0.9, g: 1, b: 0.65, a: 1}
+  windArea: {fileID: 0}
+  windPushSpeed: 7
 --- !u!4 &1393404222
 Transform:
   m_ObjectHideFlags: 0
@@ -22286,6 +22290,8 @@ MonoBehaviour:
     m_Bits: 4294967295
   glowSprite: {fileID: 0}
   glowPresentTint: {r: 0.9, g: 1, b: 0.65, a: 1}
+  windArea: {fileID: 0}
+  windPushSpeed: 7
 --- !u!212 &2048975037016516750
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -23739,6 +23745,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerTag: Player
   collectEffectPrefab: {fileID: 624216254225703048, guid: f0634b26b5499524587e0e38d1b6ef29, type: 3}
+  useLegacyCollectEffect: 0
 --- !u!1 &3596441223030146886
 GameObject:
   m_ObjectHideFlags: 0

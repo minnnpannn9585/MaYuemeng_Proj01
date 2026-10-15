@@ -14358,6 +14358,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: portal
       objectReference: {fileID: 0}
+    - target: {fileID: 8064499944040136786, guid: c51aa2ed67f17c74a893626dfb90456c, type: 3}
+      propertyPath: nextSceneName
+      value: StartMenu
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
